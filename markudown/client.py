@@ -691,76 +691,13 @@ class MarkUDown:
         """
         return self._delete(f"/monitor/{subscription_id}")
 
-    # ── Social Media ──────────────────────────────────────────────────────────
-
-    def instagram(
-        self,
-        resource: Literal["profile", "post", "hashtag", "search"],
-        target: str,
-        *,
-        limit: int = 20,
-        session_cookie: Optional[str] = None,
-        callback_url: Optional[str] = None,
-        wait: bool = True,
-    ) -> dict:
-        """Extract public Instagram data.
-
-        Args:
-            resource: Type of data to extract.
-                - "profile": Profile info + recent posts for a username.
-                - "post": Single post by shortcode.
-                - "hashtag": Recent posts for a hashtag.
-                - "search": Search results for a keyword.
-            target: Username, shortcode, hashtag, or search term.
-            limit: Maximum number of items to return (1–50).
-            session_cookie: Optional Instagram session cookie for higher limits.
-            callback_url: Webhook URL to notify on completion.
-            wait: If True, poll until the job completes.
-        """
-        body: dict = {"resource": resource, "target": target, "limit": limit}
-        if session_cookie:
-            body["session_cookie"] = session_cookie
-        if callback_url:
-            body["callback_url"] = callback_url
-        return self._submit("instagram", body, wait)
-
-    def x(
-        self,
-        resource: Literal["profile", "post", "search"],
-        target: str,
-        *,
-        limit: int = 20,
-        session_cookie: Optional[str] = None,
-        callback_url: Optional[str] = None,
-        wait: bool = True,
-    ) -> dict:
-        """Extract public X (Twitter) data.
-
-        Args:
-            resource: Type of data to extract.
-                - "profile": Profile info + recent tweets for a username.
-                - "post": Single tweet by ID.
-                - "search": Search results for a keyword.
-            target: Username, tweet ID, or search term.
-            limit: Maximum number of items to return (1–50).
-            session_cookie: Optional X session cookie for higher limits.
-            callback_url: Webhook URL to notify on completion.
-            wait: If True, poll until the job completes.
-        """
-        body: dict = {"resource": resource, "target": target, "limit": limit}
-        if session_cookie:
-            body["session_cookie"] = session_cookie
-        if callback_url:
-            body["callback_url"] = callback_url
-        return self._submit("x", body, wait)
-
     # ── Job management ────────────────────────────────────────────────────────
 
     def get_job_status(self, queue: str, job_id: str) -> dict:
         """Get the current status of any async job.
 
         Args:
-            queue: Endpoint name (e.g. "crawl", "search", "instagram").
+            queue: Endpoint name (e.g. "crawl", "search", "extract").
             job_id: Job ID returned when the job was submitted.
         """
         return self._get(f"/{queue}/{job_id}")
@@ -1220,42 +1157,6 @@ class AsyncMarkUDown:
     async def monitor_delete(self, subscription_id: str) -> dict:
         """Deactivate a monitor subscription."""
         return await self._delete(f"/monitor/{subscription_id}")
-
-    async def instagram(
-        self,
-        resource: Literal["profile", "post", "hashtag", "search"],
-        target: str,
-        *,
-        limit: int = 20,
-        session_cookie: Optional[str] = None,
-        callback_url: Optional[str] = None,
-        wait: bool = True,
-    ) -> dict:
-        """Extract public Instagram data."""
-        body: dict = {"resource": resource, "target": target, "limit": limit}
-        if session_cookie:
-            body["session_cookie"] = session_cookie
-        if callback_url:
-            body["callback_url"] = callback_url
-        return await self._submit("instagram", body, wait)
-
-    async def x(
-        self,
-        resource: Literal["profile", "post", "search"],
-        target: str,
-        *,
-        limit: int = 20,
-        session_cookie: Optional[str] = None,
-        callback_url: Optional[str] = None,
-        wait: bool = True,
-    ) -> dict:
-        """Extract public X (Twitter) data."""
-        body: dict = {"resource": resource, "target": target, "limit": limit}
-        if session_cookie:
-            body["session_cookie"] = session_cookie
-        if callback_url:
-            body["callback_url"] = callback_url
-        return await self._submit("x", body, wait)
 
     async def get_job_status(self, queue: str, job_id: str) -> dict:
         """Get the current status of any async job."""

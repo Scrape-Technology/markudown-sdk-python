@@ -406,50 +406,6 @@ md.monitor_delete(sub_id)
 
 ---
 
-### `instagram(resource, target, **opts)` → dict
-
-Extract public Instagram data.
-
-| `resource` | `target` | Description |
-|------------|----------|-------------|
-| `"profile"` | `"username"` | Profile info + recent posts |
-| `"post"` | `"shortcode"` | Single post by shortcode |
-| `"hashtag"` | `"travel"` | Recent posts for a hashtag |
-| `"search"` | `"coffee shops"` | Search results |
-
-```python
-# Profile
-profile = md.instagram("profile", "instagram", limit=20)
-
-# Hashtag
-posts = md.instagram("hashtag", "webdev", limit=30)
-
-# Search
-results = md.instagram("search", "coffee shops NYC", limit=15)
-```
-
----
-
-### `x(resource, target, **opts)` → dict
-
-Extract public X (Twitter) data.
-
-| `resource` | `target` | Description |
-|------------|----------|-------------|
-| `"profile"` | `"username"` | Profile info + recent tweets |
-| `"post"` | `"tweet_id"` | Single tweet by ID |
-| `"search"` | `"AI agents"` | Search results |
-
-```python
-# Profile
-profile = md.x("profile", "elonmusk", limit=20)
-
-# Search
-results = md.x("search", "web scraping tools", limit=25)
-```
-
----
-
 ### Job Management
 
 ```python
