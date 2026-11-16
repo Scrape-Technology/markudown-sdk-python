@@ -4,11 +4,23 @@ build-backend = "hatchling.build"
 
 [project]
 name = "markudown"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python SDK for MarkUDown — AI data extraction infrastructure"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
+keywords = [
+    "web-scraping",
+    "scraping-api",
+    "scraper",
+    "crawler",
+    "data-extraction",
+    "markdown",
+    "llm",
+    "ai-agents",
+    "rag",
+    "markudown",
+]
 dependencies = ["httpx>=0.24.0"]
 
 [project.optional-dependencies]
@@ -17,4 +29,5 @@ dev = ["pytest", "pytest-asyncio", "respx"]
 [project.urls]
 Homepage = "https://scrapetechnology.com/markudown"
 Documentation = "https://scrapetechnology.com/markudown/docs"
-Repository = "https://github.com/Scrape-Technology/MarkUDown-Engine"
+Repository = "https://github.com/Scrape-Technology/markudown-sdk-python"
+Issues = "https://github.com/Scrape-Technology/markudown-sdk-python/issues"
