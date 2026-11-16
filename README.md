@@ -1,6 +1,11 @@
 # MarkUDown Python SDK
 
+[![PyPI version](https://img.shields.io/pypi/v/markudown.svg)](https://pypi.org/project/markudown/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
 Python SDK for [MarkUDown](https://scrapetechnology.com/markudown) — AI data extraction infrastructure that turns any website into structured, ready-to-use data.
+
+Get a free API key at [scrapetechnology.com/markudown/register](https://scrapetechnology.com/markudown/register) — **500 free credits, no credit card**. Full reference: [scrapetechnology.com/markudown/docs](https://scrapetechnology.com/markudown/docs).
 
 ## Installation
 
@@ -34,7 +39,7 @@ data = md.extract(
 )
 ```
 
-Get your API key at [scrapetechnology.com/markudown](https://scrapetechnology.com/markudown). New accounts include **500 free credits**.
+Get your API key at [scrapetechnology.com/markudown/register](https://scrapetechnology.com/markudown/register). New accounts include **500 free credits** (no credit card).
 
 ---
 
@@ -66,7 +71,7 @@ md = MarkUDown(
 )
 ```
 
-All async endpoints accept `wait=False` to return the job ID immediately instead of polling:
+Async endpoints (everything except `scrape`, `screenshot`, `create_schema` and the monitor calls) poll until the job finishes and return the job object — `{"success": True, "id": ..., "status": "completed", "data": <job result>}` — so the output is under `result["data"]`. Pass `wait=False` to return the job ID immediately instead of polling:
 
 ```python
 job = md.crawl("https://example.com", wait=False)
@@ -110,7 +115,7 @@ Take a screenshot of a URL.
 
 ```python
 result = md.screenshot("https://example.com")
-# result["image"] contains base64-encoded PNG
+# result["screenshot"] contains the base64-encoded PNG
 ```
 
 ---
@@ -129,7 +134,7 @@ Discover all URLs on a website.
 
 ```python
 result = md.map("https://example.com", max_urls=500)
-print(result["data"]["urls"])
+print(result["data"]["links"])
 ```
 
 ---
@@ -159,7 +164,7 @@ result = md.crawl(
     limit=50,
     include_only=["*guide*", "*tutorial*"],
 )
-for page in result["data"]["pages"]:
+for page in result["data"]["data"]:
     print(page["url"], page["markdown"][:200])
 ```
 
@@ -208,7 +213,7 @@ Generate an extraction schema automatically from a natural language description.
 schema_data = md.create_schema(
     "Extract all products from https://shop.example.com with title, price, rating and availability"
 )
-# Returns: {"url": "...", "schema": [...], "extraction_scope": "...", ...}
+# Returns: {"url": "...", "extraction_scope": "...", "title": "string", "price": "float", "allowed_words": [...], ...}
 ```
 
 ---
@@ -236,7 +241,7 @@ result = md.batch_scrape([
     "https://example.com/page-2",
     "https://example.com/page-3",
 ])
-for page in result["data"]["pages"]:
+for page in result["data"]["data"]:
     print(page["url"])
 ```
 
@@ -275,7 +280,7 @@ Generate an RSS feed from any web page.
 
 ```python
 result = md.rss("https://blog.example.com", max_items=20, title="My Blog Feed")
-print(result["data"]["feed_url"])
+print(result["data"]["data"]["items"])
 ```
 
 ---
@@ -286,8 +291,8 @@ Detect and diff content changes on a page.
 
 ```python
 result = md.change_detection("https://example.com/pricing", include_diff=True)
-print(result["data"]["changed"])  # True/False
-print(result["data"]["diff"])
+print(result["data"]["data"]["changed"])  # True/False
+print(result["data"]["data"].get("previous_markdown"))  # set when changed and include_diff=True
 ```
 
 ---
@@ -305,7 +310,7 @@ result = md.deep_research(
     ],
     max_tokens=4096,
 )
-print(result["data"]["synthesis"])
+print(result["data"]["research"])
 ```
 
 ---
@@ -331,7 +336,7 @@ result = md.agent(
     prompt="Find the contact email on this website",
     max_steps=15,
 )
-print(result["data"]["answer"])
+print(result["data"]["data"]["answer"])
 ```
 
 ---
@@ -379,7 +384,7 @@ result = md.dataset(
     max_pages=10,
     output_format="json",
 )
-print(len(result["data"]["items"]))
+print(len(result["data"]["data"]))
 ```
 
 ---
@@ -436,6 +441,8 @@ except MarkUDownError as e:
     print(f"API error {e.status_code}: {e}")
 ```
 
+> **Note:** a key the API does not recognise is not rejected — it is served as the anonymous free tier (20 requests/day), and a 429 "Free tier daily limit exceeded" follows once that is used up. If you see that message with a paid key, check the key in your dashboard. Only a missing key returns 401.
+
 ---
 
 ## Context Manager
@@ -452,5 +459,5 @@ with MarkUDown(api_key="your-key") as md:
 
 - [Website](https://scrapetechnology.com/markudown)
 - [Documentation](https://scrapetechnology.com/markudown/docs)
-- [GitHub](https://github.com/Scrape-Technology/MarkUDown-Engine)
+- [GitHub](https://github.com/Scrape-Technology/markudown-sdk-python)
 - [MCP Server](https://github.com/Scrape-Technology/markudown-mcp)
