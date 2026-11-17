@@ -149,10 +149,10 @@ Crawl a website recursively and extract content from every page.
 | `max_depth` | int | 2 | Maximum crawl depth |
 | `limit` | int | 10 | Maximum pages to crawl |
 | `timeout` | int | 60 | Per-page timeout |
-| `include_links` | bool | False | Include links in output |
+| `include_links` | bool | False | Add each page's links to its result (`links`) |
 | `include_html` | bool | False | Include raw HTML |
 | `blocked_words` | list[str] | [] | Skip URLs with these words |
-| `include_only` | list[str] | [] | Only crawl URLs matching these patterns |
+| `include_only` | list[str] | [] | Only follow URLs containing one of these strings; `*` matches anything. The start URL is always crawled |
 | `main_content` | bool | True | Extract only main content |
 | `callback_url` | str | None | Webhook URL on completion |
 | `wait` | bool | True | Poll until complete |
@@ -179,12 +179,8 @@ Schema-based structured data extraction with AI.
 | `url` | str | required | URL to extract from |
 | `schema` | list[dict] | required | Field definitions |
 | `extract_query` | str | "" | Natural language description |
-| `extraction_scope` | str | None | "whole_site", "category", "single_page" |
-| `extraction_target` | str | None | Category or search term |
-| `allowed_words` | list[str] | [] | Keywords in relevant URLs |
-| `blocked_words` | list[str] | [] | Keywords in irrelevant URLs |
-| `allowed_patterns` | list[str] | [] | URL path fragments to include |
-| `blocked_patterns` | list[str] | [] | URL path fragments to exclude |
+| `extraction_scope` | str | None | Hint for the LLM, e.g. "single_page" or "list_page" |
+| `extraction_target` | str | None | Hint for the LLM, e.g. a category name |
 | `callback_url` | str | None | Webhook URL on completion |
 | `wait` | bool | True | Poll until complete |
 
@@ -317,7 +313,7 @@ print(result["data"]["research"])
 
 ### `agent(url, prompt, **opts)` → dict
 
-AI autonomous navigation agent that clicks, scrolls and fills forms.
+AI navigation agent: reads the page (scrolling to load lazy content), follows links and answers the prompt. It does not click buttons or fill in forms.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -326,7 +322,7 @@ AI autonomous navigation agent that clicks, scrolls and fills forms.
 | `max_steps` | int | 10 | Max actions |
 | `max_pages` | int | 5 | Max pages to visit |
 | `allow_navigation` | bool | True | Allow following links |
-| `include_screenshots` | bool | False | Capture screenshots |
+| `include_screenshots` | bool | False | Attach a base64 PNG (viewport) of each page read to its step as `screenshot` |
 | `timeout` | int | 120 | Timeout in seconds |
 | `wait` | bool | True | Poll until complete |
 
@@ -382,9 +378,10 @@ result = md.dataset(
     "https://books.toscrape.com",
     goal="Extract all books with title, price, rating and availability",
     max_pages=10,
-    output_format="json",
+    output_format="csv",  # "json" (default) or "csv"
 )
-print(len(result["data"]["data"]))
+print(len(result["data"]["data"]))  # records, always a list
+open("books.csv", "w", encoding="utf-8").write(result["data"]["csv"])  # only with "csv"
 ```
 
 ---
@@ -442,6 +439,8 @@ except MarkUDownError as e:
 ```
 
 > **Note:** a key the API does not recognise is not rejected — it is served as the anonymous free tier (20 requests/day), and a 429 "Free tier daily limit exceeded" follows once that is used up. If you see that message with a paid key, check the key in your dashboard. Only a missing key returns 401.
+
+Polling stops with `MarkUDownError` (`status_code` 404) when the job is gone — wrong id, or its result expired from the queue — instead of waiting for `poll_timeout`; `JobFailedError` when the job failed.
 
 ---
 
