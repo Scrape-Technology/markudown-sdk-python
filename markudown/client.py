@@ -117,6 +117,9 @@ class MarkUDown:
                 return data
             if status == "failed":
                 raise JobFailedError(data.get("error", "Job failed"))
+            if status == "not_found":
+                # expired from the queue or wrong id — it will never complete
+                raise MarkUDownError(f"Job {job_id} not found", 404)
             time.sleep(self.poll_interval)
         raise MarkUDownError(f"Polling timed out after {self.poll_timeout}s")
 
@@ -213,11 +216,12 @@ class MarkUDown:
             max_depth: Maximum crawl depth.
             limit: Maximum number of pages to crawl.
             timeout: Per-page timeout in seconds.
-            include_links: Include hyperlinks in output.
+            include_links: Add each page's links to its result (``links``).
             include_html: Include raw HTML in output.
             exclude_tags: HTML tags to strip.
             blocked_words: Skip URLs containing these words.
-            include_only: Only crawl URLs matching these patterns.
+            include_only: Only follow URLs containing one of these strings
+                (``*`` matches anything, e.g. "/blog/*/2024"). The start URL is always crawled.
             main_content: Extract only main content area.
             callback_url: Webhook URL to notify when the job completes.
             wait: If True, poll until the job completes.
@@ -248,10 +252,6 @@ class MarkUDown:
         extract_query: str = "",
         extraction_scope: Optional[str] = None,
         extraction_target: Optional[str] = None,
-        allowed_words: Optional[list[str]] = None,
-        blocked_words: Optional[list[str]] = None,
-        allowed_patterns: Optional[list[str]] = None,
-        blocked_patterns: Optional[list[str]] = None,
         callback_url: Optional[str] = None,
         wait: bool = True,
     ) -> dict:
@@ -261,12 +261,9 @@ class MarkUDown:
             url: URL to extract data from.
             schema: List of field definitions: [{"name": "price", "type": "float", "active": True}].
             extract_query: Natural language description of what to extract.
-            extraction_scope: One of "whole_site", "category", "single_page", "search_query".
-            extraction_target: Specific category name or search term.
-            allowed_words: Keywords that must appear in relevant URLs.
-            blocked_words: Keywords that indicate irrelevant URLs.
-            allowed_patterns: URL path fragments to include.
-            blocked_patterns: URL path fragments to exclude.
+            extraction_scope: Hint for the LLM, e.g. "single_page" or "list_page".
+                Extract only ever reads the page at ``url``.
+            extraction_target: Hint for the LLM, e.g. a category name.
             callback_url: Webhook URL to notify on completion.
             wait: If True, poll until the job completes.
         """
@@ -274,10 +271,6 @@ class MarkUDown:
             "url": url,
             "schema": schema,
             "extract_query": extract_query,
-            "allowed_words": allowed_words or [],
-            "blocked_words": blocked_words or [],
-            "allowed_patterns": allowed_patterns or [],
-            "blocked_patterns": blocked_patterns or [],
         }
         if extraction_scope:
             body["extraction_scope"] = extraction_scope
@@ -511,7 +504,8 @@ class MarkUDown:
             max_steps: Maximum number of actions the agent can take.
             max_pages: Maximum number of pages to visit.
             allow_navigation: Allow the agent to follow links.
-            include_screenshots: Capture screenshots at each step.
+            include_screenshots: Attach a base64 PNG of each page the agent reads
+                (viewport only) to that step as ``screenshot``.
             timeout: Request timeout in seconds.
             callback_url: Webhook URL to notify on completion.
             wait: If True, poll until the job completes.
@@ -551,7 +545,8 @@ class MarkUDown:
             goal: Natural language description of what to extract.
             hints: Optional hints to guide the extraction (e.g. ["click 'Load more' to get all items"]).
             schema: Optional output schema {"field": "type"}.
-            output_format: Output format: "markdown", "json", or "csv".
+            output_format: "markdown", "json" or "csv". With "json" or "csv" and a
+                schema, records come back in ``json_data`` ("csv" adds them as CSV text in ``csv``).
             max_pages: Maximum pages to visit.
             timeout: Request timeout in seconds.
             callback_url: Webhook URL to notify on completion.
@@ -633,7 +628,8 @@ class MarkUDown:
             goal: Natural language description of items to extract.
             schema: Optional output schema {"field": "type"}.
             max_pages: Maximum pages to paginate through.
-            output_format: Output format: "json" or "csv".
+            output_format: "json" or "csv". ``data`` is always the list of records;
+                with "csv" the result also carries them as CSV text in ``csv``.
             timeout: Request timeout in seconds.
             callback_url: Webhook URL to notify on completion.
             wait: If True, poll until the job completes.
@@ -780,6 +776,9 @@ class AsyncMarkUDown:
                 return data
             if status == "failed":
                 raise JobFailedError(data.get("error", "Job failed"))
+            if status == "not_found":
+                # expired from the queue or wrong id — it will never complete
+                raise MarkUDownError(f"Job {job_id} not found", 404)
             await asyncio.sleep(self.poll_interval)
         raise MarkUDownError(f"Polling timed out after {self.poll_timeout}s")
 
@@ -873,10 +872,6 @@ class AsyncMarkUDown:
         extract_query: str = "",
         extraction_scope: Optional[str] = None,
         extraction_target: Optional[str] = None,
-        allowed_words: Optional[list[str]] = None,
-        blocked_words: Optional[list[str]] = None,
-        allowed_patterns: Optional[list[str]] = None,
-        blocked_patterns: Optional[list[str]] = None,
         callback_url: Optional[str] = None,
         wait: bool = True,
     ) -> dict:
@@ -885,10 +880,6 @@ class AsyncMarkUDown:
             "url": url,
             "schema": schema,
             "extract_query": extract_query,
-            "allowed_words": allowed_words or [],
-            "blocked_words": blocked_words or [],
-            "allowed_patterns": allowed_patterns or [],
-            "blocked_patterns": blocked_patterns or [],
         }
         if extraction_scope:
             body["extraction_scope"] = extraction_scope
